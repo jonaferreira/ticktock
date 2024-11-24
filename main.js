@@ -13,6 +13,9 @@ class Flipper {
       back: 'digital back'
     };
 
+    // Convierte el nodo inicial simple al formato de flip clock
+    this._convertNode();
+
     // Obtiene los nodos del flip
     this.frontNode = this.node.querySelector('.front');
     this.backNode = this.node.querySelector('.back');
@@ -21,17 +24,34 @@ class Flipper {
     this._init();
   }
 
+  _convertNode() {
+    const frontDiv = document.createElement('div');
+    frontDiv.className = `${this.nodeClass.front} ${this.frontText}`;
+    
+    const backDiv = document.createElement('div');
+    backDiv.className = `${this.nodeClass.back} ${this.backText}`;
+    
+    const flipDiv = document.createElement('div');
+    flipDiv.className = `${this.nodeClass.flip} down`;
+    flipDiv.appendChild(frontDiv);
+    flipDiv.appendChild(backDiv);
+
+    // Reemplaza el contenido actual del nodo con el nuevo flip
+    this.node.innerHTML = '';
+    this.node.appendChild(flipDiv);
+  }
+
   _init() {
     this._setFront(this.frontText);
     this._setBack(this.backText);
   }
 
   _setFront(className) {
-    this.frontNode.setAttribute('class', this.nodeClass.front + ' ' + className);
+    this.frontNode.setAttribute('class', `${this.nodeClass.front} ${className}`);
   }
 
   _setBack(className) {
-    this.backNode.setAttribute('class', this.nodeClass.back + ' ' + className);
+    this.backNode.setAttribute('class', `${this.nodeClass.back} ${className}`);
   }
 
   _flip(type, front, back) {
@@ -50,10 +70,10 @@ class Flipper {
       flipClass += ' up';
     }
 
-    this.node.setAttribute('class', flipClass + ' go');
+    this.node.querySelector('.flip').setAttribute('class', `${flipClass} go`);
 
     setTimeout(() => {
-      this.node.setAttribute('class', flipClass);
+      this.node.querySelector('.flip').setAttribute('class', flipClass);
       this.isFlipping = false;
       this._setFront(back);
     }, this.duration);
@@ -68,33 +88,32 @@ class Flipper {
   }
 }
 
-// Ejemplo de uso de la clase Flipper en un reloj
+// Ejemplo de uso dinámico
 const clock = document.getElementById('clock');
-const flips = clock.querySelectorAll('.flip');
+const digitNodes = clock.querySelectorAll('[id^="digit"]');
+const flipObjs = [];
+
 const now = new Date();
 const nowTimeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
 const nextTimeStr = new Date(now.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
 
-const flipObjs = [];
-
-for (let i = 0; i < flips.length; i++) {
+digitNodes.forEach((node, i) => {
   flipObjs.push(new Flipper({
-    node: flips[i],
+    node,
     frontText: 'number' + nowTimeStr[i],
     backText: 'number' + nextTimeStr[i],
     duration: 600
   }));
-}
+});
 
 setInterval(function () {
   const now = new Date();
   const nowTimeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
   const nextTimeStr = new Date(now.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
 
-  for (let i = 0; i < flipObjs.length; i++) {
-    if (nowTimeStr[i] === nextTimeStr[i]) {
-      continue;
+  flipObjs.forEach((flip, i) => {
+    if (nowTimeStr[i] !== nextTimeStr[i]) {
+      flip.flipDown('number' + nowTimeStr[i], 'number' + nextTimeStr[i]);
     }
-    flipObjs[i].flipDown('number' + nowTimeStr[i], 'number' + nextTimeStr[i]);
-  }
+  });
 }, 1000);

@@ -3,7 +3,7 @@
     --flip-height: 16rem;
     --font-size: 8rem;
     --perspective: 300px;
-    --animation-duration: 0.6s;
+    --animation-duration: 0.4s;
 }
 
 html {
@@ -49,6 +49,7 @@ body {
     right: 0;
     background: #000;
     overflow: hidden;
+    backface-visibility: hidden;
     box-sizing: border-box;
 }
 
@@ -83,13 +84,13 @@ body {
 
 .flip.down.go .front:before {
     transform-origin: 50% 100%;
-    animation: frontFlipDown 0.6s ease-in-out both;
+    animation: frontFlipDown var(--animation-duration) ease-in-out both;
     box-shadow: 0 -2px 6px rgba(255, 255, 255, 0.3);
     backface-visibility: hidden;
 }
 
 .flip.down.go .back:after {
-    animation: backFlipDown 0.6s ease-in-out both;
+    animation: backFlipDown var(--animation-duration) ease-in-out both;
 }
 
 .flip.up .front:after {
@@ -109,13 +110,13 @@ body {
 
 .flip.up.go .front:after {
     transform-origin: 50% 0;
-    animation: frontFlipUp 0.6s ease-in-out both;
+    animation: frontFlipUp var(--animation-duration) ease-in-out both;
     box-shadow: 0 2px 6px rgba(255, 255, 255, 0.3);
     backface-visibility: hidden;
 }
 
 .flip.up.go .back:before {
-    animation: backFlipUp 0.6s ease-in-out both;
+    animation: backFlipUp var(--animation-duration) ease-in-out both;
 }
 
 @keyframes frontFlipDown {

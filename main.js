@@ -1,119 +1,70 @@
-class Flipper {
-  constructor(config) {
-    this.node = config.node;
-    this.frontText = config.frontText || 'number0';
-    this.backText = config.backText || 'number1';
-    this.duration = config.duration || 600;
-    this.isFlipping = false;
+import Flipper from './Flipper.js';
 
-    // Establece las clases de los elementos
-    this.nodeClass = {
-      flip: 'flip',
-      front: 'digital front',
-      back: 'digital back'
-    };
+const clock = document.getElementById('clock');
+const digitNodes = clock.querySelectorAll('[id^="digit"]');
+const digits = [];
 
-    // Convierte el nodo inicial simple al formato de flip clock
-    this._convertNode();
+let lastUpdateTime = new Date();
+let lastTimeStr = lastUpdateTime.toTimeString().slice(0, 8).replace(/:/g, '');
+let nextTimeStr = new Date(lastUpdateTime.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
 
-    // Obtiene los nodos del flip
-    this.frontNode = this.node.querySelector('.front');
-    this.backNode = this.node.querySelector('.back');
+digitNodes.forEach((node, i) => {
+  const formatDigit = new Flipper({
+    node,
+    frontText: 'number' + lastTimeStr[i],
+    backText: 'number' + nextTimeStr[i],
+    duration: 600
+  });
 
-    // Inicializa el flip
-    this._init();
-  }
+  digits.push(formatDigit);
+});
 
-  _convertNode() {
-    const frontDiv = document.createElement('div');
-    frontDiv.className = `${this.nodeClass.front} ${this.frontText}`;
-    
-    const backDiv = document.createElement('div');
-    backDiv.className = `${this.nodeClass.back} ${this.backText}`;
-    
-    const flipDiv = document.createElement('div');
-    flipDiv.className = `${this.nodeClass.flip} down`;
-    flipDiv.appendChild(frontDiv);
-    flipDiv.appendChild(backDiv);
+async function updateFlipper() {
+  const now = new Date();
+  const nowTimeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+  let nextTimeStr = new Date(now.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
 
-    // Reemplaza el contenido actual del nodo con el nuevo flip
-    this.node.innerHTML = '';
-    this.node.appendChild(flipDiv);
-  }
-
-  _init() {
-    this._setFront(this.frontText);
-    this._setBack(this.backText);
-  }
-
-  _setFront(className) {
-    this.frontNode.setAttribute('class', `${this.nodeClass.front} ${className}`);
-  }
-
-  _setBack(className) {
-    this.backNode.setAttribute('class', `${this.nodeClass.back} ${className}`);
-  }
-
-  _flip(type, front, back) {
-    if (this.isFlipping) {
-      return false;
+  // Hacer que las actualizaciones del flip sean asincrónicas
+  const flipPromises = digits.map((flip, i) => {
+    if (nowTimeStr[i] !== nextTimeStr[i]) {
+      return new Promise((resolve) => {
+        flip.flipDown('number' + nowTimeStr[i], 'number' + nextTimeStr[i]);
+        resolve();
+      });
     }
+  });
 
-    this.isFlipping = true;
-    this._setFront(front);
-    this._setBack(back);
+  // Esperar que todas las animaciones terminen antes de continuar
+  await Promise.all(flipPromises);
 
-    let flipClass = this.nodeClass.flip;
-    if (type === 'down') {
-      flipClass += ' down';
-    } else {
-      flipClass += ' up';
-    }
+  // Actualizar el tiempo para la siguiente iteración
+  lastTimeStr = nowTimeStr;
+  nextTimeStr = new Date(now.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
+}
 
-    this.node.querySelector('.flip').setAttribute('class', `${flipClass} go`);
+function updateClock() {
+  const now = new Date();
 
-    setTimeout(() => {
-      this.node.querySelector('.flip').setAttribute('class', flipClass);
-      this.isFlipping = false;
-      this._setFront(back);
-    }, this.duration);
-  }
-
-  flipDown(front, back) {
-    this._flip('down', front, back);
-  }
-
-  flipUp(front, back) {
-    this._flip('up', front, back);
+  // Si el segundo ha cambiado, actualizamos el flip
+  if (now.getSeconds() !== lastUpdateTime.getSeconds()) {
+    updateFlipper();
+    lastUpdateTime = now;
   }
 }
 
-// Ejemplo de uso dinámico
-const clock = document.getElementById('clock');
-const digitNodes = clock.querySelectorAll('[id^="digit"]');
-const flipObjs = [];
+// Usar setInterval para actualizar cada segundo
+setInterval(updateClock, 1000);
 
-const now = new Date();
-const nowTimeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
-const nextTimeStr = new Date(now.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
-
-digitNodes.forEach((node, i) => {
-  flipObjs.push(new Flipper({
-    node,
-    frontText: 'number' + nowTimeStr[i],
-    backText: 'number' + nextTimeStr[i],
-    duration: 600
-  }));
+// Manejar la visibilidad de la pestaña
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    console.log('La pestaña está oculta. Pausando actualizaciones.');
+    // Puedes detener cualquier animación o lógica aquí si es necesario.
+  } else if (document.visibilityState === 'visible') {
+    console.log('La pestaña está visible de nuevo. Reanudando actualizaciones.');
+    // Aquí puedes reiniciar el reloj para sincronizar con la hora actual
+    const now = new Date();
+    lastUpdateTime = now; // Resincronizar el último tiempo
+    updateFlipper(); // Actualizar los flips si es necesario
+  }
 });
-
-setInterval(function () {
-  const now = new Date();
-  const nowTimeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
-  const nextTimeStr = new Date(now.getTime() + 1000).toTimeString().slice(0, 8).replace(/:/g, '');
-
-  flipObjs.forEach((flip, i) => {
-    if (nowTimeStr[i] !== nextTimeStr[i]) {
-      flip.flipDown('number' + nowTimeStr[i], 'number' + nextTimeStr[i]);
-    }
-  });
-}, 1000);

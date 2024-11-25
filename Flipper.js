@@ -3,7 +3,7 @@ export default class Flipper {
     this.node = config.node;
     this.frontText = config.frontText || 'number0';
     this.backText = config.backText || 'number1';
-    this.duration = config.duration || 600;
+    this.duration = 600;
     this.isFlipping = false;
 
     // Establece las clases de los elementos
@@ -63,13 +63,7 @@ export default class Flipper {
     setTimeout(() => this._setFront(front), this.duration);
     this._setBack(back);
 
-    let flipClass = this.nodeClass.flip;
-    if (type === 'down') {
-      flipClass += ' down';
-    } else {
-      flipClass += ' up';
-    }
-
+    const flipClass = `${this.nodeClass.flip} ${type}`;
     this.node.querySelector('.flip').setAttribute('class', `${flipClass} go`);
 
     setTimeout(() => {
@@ -77,6 +71,18 @@ export default class Flipper {
       this.isFlipping = false;
       this._setFront(back);
     }, this.duration);
+  }
+
+  async update(current, next) {
+    if (current !== next) {
+      this._flip('down', `number${current}`, `number${next}`);
+    }
+  }
+
+  reset(front, back) {
+    this.isFlipping = false;
+    this._setFront(front);
+    this._setBack(back);
   }
 
   flipDown(front, back) {
